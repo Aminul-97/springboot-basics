@@ -1,0 +1,107 @@
+• You already have the right hook point: ExceptionHandler.kt.
+  SlackSvc exists but is empty: SlackSvc.kt.
+
+  Use this structure (same pattern as your other project), then call it from each @ExceptionHandler.
+
+  // src/main/kotlin/no/reai/nexbal/svc/SlackSvc.kt
+  package no.reai.nexbal.svc
+
+  import org.slf4j.LoggerFactory
+  import org.springframework.beans.factory.annotation.Value
+  import org.springframework.stereotype.Service
+  import org.springframework.web.service.registry.ImportHttpServices
+  import java.util.concurrent.ConcurrentHashMap
+
+  @Service
+  @ImportHttpServices(SlackHttpApi::class)
+  class SlackSvc(
+      private val slackHttpApi: SlackHttpApi,
+      @Value("\${slack.oauth.token}") private val token: String,
+      @Value("\${spring.profiles.active:}") private val activeProfile: String
+  ) {
+      private val logger = LoggerFactory.getLogger(SlackSvc::class.java)
+      private val debounceMillis = 10_000L
+      private val lastSentAt = ConcurrentHashMap<String, Long>()
+
+      fun logErrorToSlack(message: String, stackTraceText: String) {
+          if (activeProfile == "dev") return
+
+          val key = "$message-${stackTraceText.take(100)}"
+          val now = System.currentTimeMillis()
+          val sentAt = lastSentAt.compute(key) { _, prev ->
+              if (prev == null || now - prev >= debounceMillis) now else prev
+          }
+          if (sentAt != now) return
+
+          val text = buildString {
+              appendLine(message)
+              appendLine("```")
+              appendLine(stackTraceText.take(2000))
+              appendLine("```")
+          }
+
+          runCatching {
+              val res = slackHttpApi.postMessage(
+                  authorization = "Bearer $token",
+                  payload = SlackMessageReq(channel = "#reai-errors", text = text)
+              )
+              if (!res.ok) logger.error("Slack message failed: {}", res.error)
+          }.onFailure { e ->
+              logger.error("Failed to send Slack message", e)
+          }
+      }
+  }
+
+  // src/main/kotlin/no/reai/nexbal/svc/SlackHttpApi.kt
+  package no.reai.nexbal.svc
+
+  import org.springframework.http.HttpHeaders
+  import org.springframework.http.MediaType
+  import org.springframework.web.bind.annotation.RequestBody
+  import org.springframework.web.bind.annotation.RequestHeader
+  import org.springframework.web.service.annotation.HttpExchange
+  import org.springframework.web.service.annotation.PostExchange
+
+  @HttpExchange(
+      url = "https://slack.com/api",
+      contentType = MediaType.APPLICATION_JSON_VALUE,
+      accept = [MediaType.APPLICATION_JSON_VALUE]
+  )
+  interface SlackHttpApi {
+      @PostExchange("/chat.postMessage")
+      fun postMessage(
+          @RequestHeader(HttpHeaders.AUTHORIZATION) authorization: String,
+          @RequestBody payload: SlackMessageReq
+      ): SlackRes
+  }
+
+  data class SlackMessageReq(val channel: String, val text: String)
+  data class SlackRes(val ok: Boolean, val error: String?)
+
+  Then wire it into your advice:
+
+  // ExceptionHandler constructor injection
+  class ExceptionHandler(
+      private val slackSvc: SlackSvc
+  ) {
+      @ExceptionHandler(value = [IllegalStateException::class])
+      fun handleIllegalStateException(ex: IllegalStateException, model: Model, response: HttpServletResponse): String {
+          logger.error(ex.message, ex)
+          slackSvc.logErrorToSlack(
+              message = ex.message ?: "Illegal state",
+              stackTraceText = ex.stackTraceToString()
+          )
+          response.status = HttpStatus.INTERNAL_SERVER_ERROR.value()
+          model.addAttribute("errorAttribute", Callout.Error(ex.message ?: "Unexpected error"))
+          return "fragments/r-callout"
+      }
+  }
+
+  And add config in application.yaml:
+
+  slack:
+    oauth:
+      token: ${SLACK_OAUTH_TOKEN:}
+
+
+

@@ -1,0 +1,99 @@
+Q: I want the 'create-customer-dialog' to be pre-rendered, dialogs open
+  instantly, and there’s no need to send additional requests. How can I do
+  that? Just share me the detailed steps. Don't make any change to the code.
+  
+  
+• Use this exact approach for pre-rendered create-customer-dialog (no code changes made by me).
+
+  1) Controller: prepare create form model in /customer
+
+  File: CustomerCtrl.kt (/home/aminul/Greg/nexbal/src/main/kotlin/no/reai/nexbal/ctrl/CustomerCtrl.kt)
+
+  @GetMapping
+  fun customers(model: Model): String {
+      val customerItems = customerSvc.listCustomers().map { it.toCustomerListItemResponse() }
+      model.addAttribute("customersResponse", CustomersResponse(items = customerItems))
+      model.addAttribute("createCustomerRequest", CreateCustomerRequest())
+      return "customers"
+  }
+
+  2) Template: remove hx-get from "new customer" button, only open dialog
+
+  File: customers.html (/home/aminul/Greg/nexbal/src/main/resources/templates/customers.html)
+
+  <wa-button
+      size="small"
+      class="custom-btn"
+      onclick="document.querySelector('#customer-new-dialog').open = true;"
+      pill>
+      <wa-icon slot="start" name="user-plus"></wa-icon>
+      <th:block th:text="#{customer.list.newLink}"></th:block>
+  </wa-button>
+
+  3) Template: pre-render fragment inside dialog body
+
+  File: customers.html (/home/aminul/Greg/nexbal/src/main/resources/templates/customers.html)
+
+  <wa-dialog id="customer-new-dialog">
+      <div id="customer-new-dialog-body"
+           th:replace="~{fragments/create-customer-dialog :: content}">
+      </div>
+  </wa-dialog>
+
+  4) Optional: full-page validation error flow (recommended for pre-rendered mode)
+
+  File: CustomerCtrl.kt (/home/aminul/Greg/nexbal/src/main/kotlin/no/reai/nexbal/ctrl/CustomerCtrl.kt)
+
+  @PostMapping
+  fun createCustomer(
+      @Valid @ModelAttribute("createCustomerRequest") createCustomerRequest: CreateCustomerRequest,
+      bindingResult: BindingResult,
+      model: Model,
+  ): String {
+      if (bindingResult.hasErrors()) {
+          val customerItems = customerSvc.listCustomers().map { it.toCustomerListItemResponse() }
+          model.addAttribute("customersResponse", CustomersResponse(items = customerItems))
+          model.addAttribute("openCreateCustomerDialog", true)
+          return "customers"
+      }
+
+      customerSvc.createCustomer(createCustomerRequest.toCreateCustomerPayload())
+      return "redirect:/customer"
+  }
+
+  Then in customers.html, open dialog on load when needed:
+
+  <wa-dialog id="customer-new-dialog" th:attr="open=${openCreateCustomerDialog}">
+      <div id="customer-new-dialog-body"
+           th:replace="~{fragments/create-customer-dialog :: content}">
+      </div>
+  </wa-dialog>
+
+  If you want, I can also share the equivalent code snippets for banks.html and products.html in the same pattern.
+  
+  ----------------------------------------
+  
+                          <a th:onclick="|document.querySelector('#update-customer-dialog-${item.id}').open = true;|">
+                            <wa-icon name="pen-to-square"></wa-icon>
+                        </a>
+
+
+    <th:block th:each="item : ${customersResponse.items}">
+        <wa-dialog th:id="|update-customer-dialog-${item.id}|">
+            <form th:action="@{/customer/{id}(id=${item.id})}" method="post" class="wa-stack wa-align-items-center">
+                <div class="wa-stack" style="width: 100%; text-align: center;">
+                    <span class="wa-heading-xl" th:text="#{customer.edit.heading}"></span>
+                    <p th:text="#{customer.edit.subtitle}"/>
+                </div>
+
+                <div class="wa-stack" style="width: 80%">
+                    <wa-input name="name" type="text" required th:value="${item.name}" th:label="#{customer.edit.name.label}"></wa-input>
+                        <wa-input name="organizationNumber" type="text" th:value="${item.organizationNumber}"
+                                  th:label="#{customer.edit.organizationNumber.label}"></wa-input>
+                        <wa-input name="email" type="email" th:value="${item.email}" th:label="#{customer.edit.email.label}"></wa-input>
+                </div>
+
+                <wa-button type="submit" variant="brand" th:text="#{customer.edit.submit}"></wa-button>
+            </form>
+        </wa-dialog>
+    </th:block>
