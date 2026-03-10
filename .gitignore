@@ -1,3 +1,8 @@
 
 .gradle/9.3.1/checksums/checksums.lock
 /.idea
+/.gradle
+/build
+/.gradle
+/.gradle/9.3.1
+/.gradle/9.3.1/executionHistory
