@@ -1,3 +1,12 @@
 spring:
   application:
     name: sbdummy
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/demo_db
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
