@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service
 class DemoService(
     private val demoRepository: DemoRepository
 ) {
-    fun getData(Id: Int){
-        demoRepository.findById(Id)
+    fun getData(): Any {
+        return demoRepository.findAll()
     }
 
     fun addData(user: User){

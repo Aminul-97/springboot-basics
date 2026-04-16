@@ -25,7 +25,9 @@ class HomeControl(
     }
 
     @GetMapping("/users")
-    fun users(model: Model): String {
+    fun users(model: Model): Any {
+        println(demoService.getData())
+        model.addAttribute("users", demoService.getData())
         return "users"
     }
 
