@@ -298,4 +298,48 @@ I can help you upgrade this to:
 
 Just tell me 👍
 
-# FAQ 1: 
+# FAQ 1: Why I'm getting the error? Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+
+### The Fix
+
+To fix this, you need to configure Spring Boot to scan both package hierarchies. You can achieve this using either of the
+following approaches:
+
+#### Option 1: Specify  scanBasePackages  on  @SpringBootApplication  (Recommended)
+
+Modify SbdummyApplication.kt to include the additional package in the base package scan:
+
+```kotlin
+     package com.test.sbdummy
+
+     import org.springframework.boot.autoconfigure.SpringBootApplication
+     import org.springframework.boot.runApplication
+
+    -@SpringBootApplication
+    +@SpringBootApplication(scanBasePackages = ["com.test.sbdummy", "com.testmodule"])
+     class SbdummyApplication
+
+     fun main(args: Array<String>) {
+         runApplication<SbdummyApplication>(*args)
+     }
+```
+
+#### Option 2: Add the  @ComponentScan  annotation
+
+Alternatively, you can achieve the same result using the explicit  @ComponentScan  annotation on SbdummyApplication.kt:
+
+```kotlin
+     package com.test.sbdummy
+
+     import org.springframework.boot.autoconfigure.SpringBootApplication
+     import org.springframework.boot.runApplication
+    +import org.springframework.context.annotation.ComponentScan
+
+     @SpringBootApplication
+    +@ComponentScan(basePackages = ["com.test.sbdummy", "com.testmodule"])
+     class SbdummyApplication
+
+     fun main(args: Array<String>) {
+         runApplication<SbdummyApplication>(*args)
+     }
+```
