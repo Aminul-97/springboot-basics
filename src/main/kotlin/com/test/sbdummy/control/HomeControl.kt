@@ -3,6 +3,7 @@ package com.test.sbdummy.control
 import com.test.sbdummy.data.User
 import com.test.sbdummy.service.DemoService
 import com.testmodule.user.service.UserService
+import com.test.sbdummy.service.SecurityService
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping
 class HomeControl(
     private val demoService: DemoService,
     private val userService: UserService,
+    private val securityService: SecurityService,
 ) {
 
     @GetMapping("/")
@@ -55,6 +57,12 @@ class HomeControl(
     @GetMapping("/test-module")
     fun testModule( model: Model,): String {
         model.addAttribute("userData", userService.getMessage())
+        return "test-module"
+    }
+
+    @GetMapping("/security")
+    fun securityModule( model: Model,): String {
+        model.addAttribute("userData", securityService.getMessage())
         return "test-module"
     }
 }

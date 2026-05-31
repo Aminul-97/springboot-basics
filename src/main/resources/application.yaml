@@ -2,6 +2,11 @@ spring:
   application:
     name: sbdummy
 
+  security:
+    user:
+      name: admin
+      password: "{noop}abc123"
+
   datasource:
     url: jdbc:postgresql://localhost:5432/demo_db
     username: postgres
