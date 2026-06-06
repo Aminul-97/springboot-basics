@@ -28,7 +28,7 @@ Learn how to create and call functions.
 - Functions are declared with `fun`.
 - Parameters go inside parentheses.
 - Return types are written after `:`.
-- Simple functions can use single-expression syntax.
+- Simple functions can use single-expression syntax. 
 
 ## 3. Null Safety (`?`, `?.`, `?:`, `!!`)
 

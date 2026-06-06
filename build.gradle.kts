@@ -1,9 +1,9 @@
 plugins {
-	kotlin("jvm") version "2.3.10"
-	kotlin("plugin.spring") version "2.3.10"
+	kotlin("jvm") version "2.3.21"
+	kotlin("plugin.spring") version "2.3.21"
 	id("org.springframework.boot") version "4.1.0-M2"
 	id("io.spring.dependency-management") version "1.1.7"
-    kotlin("plugin.jpa") version "2.3.10"
+    kotlin("plugin.jpa") version "2.3.21"
 }
 
 group = "com.test"
@@ -12,7 +12,7 @@ description = "Demo project for Spring Boot"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
+		languageVersion = JavaLanguageVersion.of(26)
 	}
 }
 
