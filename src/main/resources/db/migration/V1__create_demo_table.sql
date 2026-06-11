@@ -4,3 +4,14 @@ CREATE TABLE demo (
   email VARCHAR(150),
   account_num VARCHAR(50)
 );
+
+CREATE TABLE todos (
+    id BIGSERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    priority SMALLINT NOT NULL DEFAULT 0,
+    due_date TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
